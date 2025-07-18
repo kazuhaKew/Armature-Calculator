@@ -215,15 +215,32 @@ class RebarCalculator {
     }
 
     exportData() {
-        const dataStr = JSON.stringify(this.records, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        if (this.records.length === 0) {
+            alert('Нет данных для экспорта');
+            return;
+        }
         
-        const exportFileDefaultName = `rebar_calculations_${new Date().toISOString().split('T')[0]}.json`;
+        const exportOption = confirm('Выберите действие:\nНажмите "OK" для экспорта данных в TXT файл\nНажмите "Отмена", чтобы отменить экспорт');
         
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
+        if (exportOption) {
+            const dataStr = JSON.stringify(this.records, null, 2);
+            const dataUri = 'data:text/plain;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `rebar_calculations_${new Date().toISOString().split('T')[0]}.txt`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            const clearOption = confirm('Данные успешно экспортированы!\nХотите очистить текущие сохраненные данные?');
+            if (clearOption) {
+                this.records = [];
+                this.saveToStorage();
+                this.loadRecords();
+                alert('Все сохраненные данные удалены');
+            }
+        }
     }
 
     importData(event) {
