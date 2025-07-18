@@ -200,6 +200,42 @@ table th {
     background-color: var(--table-header-bg);
     font-weight: bold;
     color: var(--dark-color);
+    position: relative;
+    padding-right: 30px; /* Make room for the sort button */
+    vertical-align: middle;
+}
+
+.sort-btn {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    color: inherit;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sort-btn:hover {
+    color: var(--accent-color);
+}
+
+.sort-icon {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.sort-asc .sort-icon::after {
+    content: "↑";
+}
+
+.sort-desc .sort-icon::after {
+    content: "↓";
 }
 
 .edit-btn {
@@ -264,6 +300,12 @@ table th {
 .filter-icon {
   font-size: 0.85em;
   color: #777;
+}
+
+/* Make the table more responsive */
+.table-container {
+    overflow-x: auto;
+    margin-top: 1rem;
 }
 
 /* Responsive adjustments */

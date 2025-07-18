@@ -87,58 +87,52 @@
             
             <section class="saved-data">
                 <h2>Сохраненные расчеты</h2>
-                <div class="filters-container">
-                    <h3>Сортировка данных</h3>
-                    <div class="filters">
-                        <div class="filter-group">
-                            <button id="sortByNameBtn" class="filter-btn">
-                                <span class="filter-icon">↕</span>
-                                Название
-                            </button>
-                            <button id="sortByDateBtn" class="filter-btn">
-                                <span class="filter-icon">↕</span>
-                                Дата и время
-                            </button>
-                        </div>
-                        
-                        <div class="filter-group">
-                            <button id="sortByLengthBtn" class="filter-btn">
-                                <span class="filter-icon">↕</span>
-                                Длина (см)
-                            </button>
-                            <button id="sortBySegmentBtn" class="filter-btn">
-                                <span class="filter-icon">↕</span>
-                                Отрезок (см)
-                            </button>
-                            <button id="sortByQuantityBtn" class="filter-btn">
-                                <span class="filter-icon">↕</span>
-                                Кол-во (шт)
-                            </button>
-                        </div>
-                        
-                        <div class="filter-group">
-                            <button id="sortBySegmentsBtn" class="filter-btn">
-                                <span class="filter-icon">↕</span>
-                                Вырезано
-                            </button>
-                            <button id="sortByRemainderBtn" class="filter-btn">
-                                <span class="filter-icon">↕</span>
-                                Остаток (см)
-                            </button>
-                        </div>
-                    </div>
-                </div>
                 <div class="table-container">
                     <table id="savedRecords">
                         <thead>
                             <tr>
-                                <th>Название</th>
-                                <th>Длина (см)</th>
-                                <th>Отрезок (см)</th>
-                                <th>Кол-во (шт)</th>
-                                <th>Вырезано</th>
-                                <th>Остаток (см)</th>
-                                <th>Дата и время</th>
+                                <th>
+                                    Название
+                                    <button id="sortByNameBtn" class="sort-btn" title="Сортировать по названию">
+                                        <span class="sort-icon">↕</span>
+                                    </button>
+                                </th>
+                                <th>
+                                    Длина (см)
+                                    <button id="sortByLengthBtn" class="sort-btn" title="Сортировать по длине">
+                                        <span class="sort-icon">↕</span>
+                                    </button>
+                                </th>
+                                <th>
+                                    Отрезок (см)
+                                    <button id="sortBySegmentBtn" class="sort-btn" title="Сортировать по отрезку">
+                                        <span class="sort-icon">↕</span>
+                                    </button>
+                                </th>
+                                <th>
+                                    Кол-во (шт)
+                                    <button id="sortByQuantityBtn" class="sort-btn" title="Сортировать по количеству">
+                                        <span class="sort-icon">↕</span>
+                                    </button>
+                                </th>
+                                <th>
+                                    Вырезано
+                                    <button id="sortBySegmentsBtn" class="sort-btn" title="Сортировать по вырезанным">
+                                        <span class="sort-icon">↕</span>
+                                    </button>
+                                </th>
+                                <th>
+                                    Остаток (см)
+                                    <button id="sortByRemainderBtn" class="sort-btn" title="Сортировать по остатку">
+                                        <span class="sort-icon">↕</span>
+                                    </button>
+                                </th>
+                                <th>
+                                    Дата и время
+                                    <button id="sortByDateBtn" class="sort-btn" title="Сортировать по дате">
+                                        <span class="sort-icon">↕</span>
+                                    </button>
+                                </th>
                                 <th>Действия</th>
                             </tr>
                         </thead>
