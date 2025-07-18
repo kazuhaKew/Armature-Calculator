@@ -63,6 +63,21 @@ class RebarCalculator {
         document.getElementById('importFile').addEventListener('change', (e) => {
             this.importData(e);
         });
+
+        // Clear all saved records functionality
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            // Show confirmation dialog
+            if (confirm('Вы уверены, что хотите удалить все сохраненные расчеты? Это действие невозможно отменить.')) {
+                // Clear all records from localStorage
+                localStorage.removeItem('rebarRecords');
+                
+                // Clear the table
+                document.getElementById('recordsBody').innerHTML = '';
+                
+                // Show notification to user
+                alert('Все сохраненные расчеты успешно удалены.');
+            }
+        });
     }
 
     calculate() {
