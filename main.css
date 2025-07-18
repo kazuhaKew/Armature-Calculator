@@ -31,7 +31,7 @@ header {
     margin-bottom: 2rem;
     text-align: center;
     padding: 1rem;
-    background-color: var(--primary-color);
+    background-color: var(--success-color);
     color: white;
     border-radius: 5px;
 }
