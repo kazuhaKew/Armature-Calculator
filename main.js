@@ -90,25 +90,38 @@ class RebarCalculator {
     initTheme() {
         // Check for saved theme preference or use system preference
         const savedTheme = localStorage.getItem('theme');
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
         
         if (savedTheme) {
             document.documentElement.setAttribute('data-theme', savedTheme);
+            themeToggleBtn.setAttribute('aria-checked', savedTheme === 'dark');
             this.updateThemeIcon(savedTheme);
         } else {
             // Check for system preference
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             const theme = prefersDark ? 'dark' : 'light';
             document.documentElement.setAttribute('data-theme', theme);
+            themeToggleBtn.setAttribute('aria-checked', theme === 'dark');
             localStorage.setItem('theme', theme);
             this.updateThemeIcon(theme);
         }
+        
+        // Add keyboard support
+        themeToggleBtn.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'Enter') {
+                e.preventDefault();
+                this.toggleTheme();
+            }
+        });
     }
 
     toggleTheme() {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
         
         document.documentElement.setAttribute('data-theme', newTheme);
+        themeToggleBtn.setAttribute('aria-checked', newTheme === 'dark');
         localStorage.setItem('theme', newTheme);
         
         this.updateThemeIcon(newTheme);
