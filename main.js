@@ -20,8 +20,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const calculateBtn = document.getElementById('calculateBtn');
     const saveBtn = document.getElementById('saveBtn');
     
-    calculateBtn.addEventListener('click', calculateResults);
+    // Change Calculate button to Clear button
+    calculateBtn.textContent = "Очистить";
+    calculateBtn.addEventListener('click', clearInputs);
     saveBtn.addEventListener('click', saveCalculation);
+    
+    // Add live calculation with input event listeners
+    document.getElementById('rebarLength').addEventListener('input', calculateResults);
+    document.getElementById('segmentLength').addEventListener('input', calculateResults);
+    document.getElementById('quantity').addEventListener('input', calculateResults);
     
     // Initialize saved records from localStorage
     let savedRecords = JSON.parse(localStorage.getItem('savedRecords')) || [];
@@ -46,14 +53,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // Clear all data functionality
     document.getElementById('clearBtn').addEventListener('click', clearAllData);
     
-    // Calculate function
+    // Clear inputs function
+    function clearInputs() {
+        document.getElementById('rebarName').value = '';
+        document.getElementById('rebarLength').value = '1750';
+        document.getElementById('segmentLength').value = '';
+        document.getElementById('quantity').value = '1';
+        document.getElementById('segments').textContent = '0';
+        document.getElementById('remainder').textContent = '0';
+        document.getElementById('totalRemainder').textContent = '0';
+    }
+    
+    // Calculate function - now updates live
     function calculateResults() {
-        const rebarLength = parseFloat(document.getElementById('rebarLength').value);
-        const segmentLength = parseFloat(document.getElementById('segmentLength').value);
-        const quantity = parseInt(document.getElementById('quantity').value);
+        const rebarLength = parseFloat(document.getElementById('rebarLength').value) || 0;
+        const segmentLength = parseFloat(document.getElementById('segmentLength').value) || 0;
+        const quantity = parseInt(document.getElementById('quantity').value) || 0;
         
-        if (!rebarLength || !segmentLength || !quantity) {
-            alert('Пожалуйста, заполните все поля корректно');
+        if (rebarLength <= 0 || segmentLength <= 0 || quantity <= 0) {
+            document.getElementById('segments').textContent = '0';
+            document.getElementById('remainder').textContent = '0';
+            document.getElementById('totalRemainder').textContent = '0';
             return;
         }
         
@@ -81,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (segments === 0) {
-            alert('Пожалуйста, сначала выполните расчет');
+            alert('Пожалуйста, введите корректные значения для расчета');
             return;
         }
         
@@ -100,6 +120,9 @@ document.addEventListener('DOMContentLoaded', function() {
         savedRecords.push(record);
         localStorage.setItem('savedRecords', JSON.stringify(savedRecords));
         updateRecordsTable();
+        
+        // Optional: Clear inputs after saving
+        // clearInputs();
     }
     
     // Update the records table
