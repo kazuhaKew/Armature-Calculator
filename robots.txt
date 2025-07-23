@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Sitemap: https://kazuhakew.github.io/Armature-Calculator/sitemap.xml
+
+# Armature Calculator
+# Created: 2025
+# Contact: asakew7@gmail.com
