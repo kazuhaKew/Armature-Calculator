@@ -1,341 +1,276 @@
-class RebarCalculator {
-    constructor() {
-        this.records = JSON.parse(localStorage.getItem('rebarRecords')) || [];
-        this.initEventListeners();
-        this.loadRecords();
-        this.calculate(); // Initial calculation
-        this.initTheme(); // Initialize theme
-    }
-
-    initEventListeners() {
-        // Live calculation on input change
-        const inputs = ['rebarLength', 'segmentLength', 'quantity'];
-        inputs.forEach(id => {
-            document.getElementById(id).addEventListener('input', () => {
-                this.calculate();
-            });
-        });
-
-        // Button event listeners
-        document.getElementById('calculateBtn').addEventListener('click', () => {
-            this.calculate();
-        });
-
-        document.getElementById('saveBtn').addEventListener('click', () => {
-            this.saveRecord();
-        });
-
-        document.getElementById('sortByNameBtn').addEventListener('click', () => {
-            this.sortRecords('name');
-        });
-
-        document.getElementById('sortByLengthBtn').addEventListener('click', () => {
-            this.sortRecords('rebarLength');
-        });
-
-        document.getElementById('sortBySegmentBtn').addEventListener('click', () => {
-            this.sortRecords('segmentLength');
-        });
-
-        document.getElementById('sortByQuantityBtn').addEventListener('click', () => {
-            this.sortRecords('quantity');
-        });
-
-        document.getElementById('sortBySegmentsBtn').addEventListener('click', () => {
-            this.sortRecords('segments');
-        });
-
-        document.getElementById('sortByRemainderBtn').addEventListener('click', () => {
-            this.sortRecords('remainder');
-        });
-
-        document.getElementById('sortByDateBtn').addEventListener('click', () => {
-            this.sortRecords('date');
-        });
-
-        document.getElementById('exportBtn').addEventListener('click', () => {
-            this.exportData();
-        });
-
-        document.getElementById('importBtn').addEventListener('click', () => {
-            document.getElementById('importFile').click();
-        });
-
-        document.getElementById('importFile').addEventListener('change', (e) => {
-            this.importData(e);
-        });
-
-        // Clear all saved records functionality
-        document.getElementById('clearBtn').addEventListener('click', () => {
-            // Show confirmation dialog
-            if (confirm('Вы уверены, что хотите удалить все сохраненные расчеты? Это действие невозможно отменить.')) {
-                // Clear all records from localStorage
-                localStorage.removeItem('rebarRecords');
-                
-                // Clear the table
-                document.getElementById('recordsBody').innerHTML = '';
-                
-                // Show notification to user
-                alert('Все сохраненные расчеты успешно удалены.');
-            }
-        });
-
-        // Theme toggle functionality
-        document.getElementById('themeToggleBtn').addEventListener('click', () => {
-            this.toggleTheme();
-        });
-    }
-
-    // Theme functionality
-    initTheme() {
-        // Check for saved theme preference or use system preference
-        const savedTheme = localStorage.getItem('theme');
-        const themeToggleBtn = document.getElementById('themeToggleBtn');
-        
-        if (savedTheme) {
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            themeToggleBtn.setAttribute('aria-checked', savedTheme === 'dark');
-            this.updateThemeIcon(savedTheme);
-        } else {
-            // Check for system preference
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const theme = prefersDark ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', theme);
-            themeToggleBtn.setAttribute('aria-checked', theme === 'dark');
-            localStorage.setItem('theme', theme);
-            this.updateThemeIcon(theme);
-        }
-        
-        // Add keyboard support
-        themeToggleBtn.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' || e.code === 'Enter') {
-                e.preventDefault();
-                this.toggleTheme();
-            }
-        });
-    }
-
-    toggleTheme() {
+document.addEventListener('DOMContentLoaded', function() {
+    // Theme toggling functionality
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    
+    // Initialize theme from localStorage or default to light
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    themeToggleBtn.setAttribute('aria-checked', savedTheme === 'dark');
+    
+    themeToggleBtn.addEventListener('click', function() {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        const themeToggleBtn = document.getElementById('themeToggleBtn');
         
         document.documentElement.setAttribute('data-theme', newTheme);
-        themeToggleBtn.setAttribute('aria-checked', newTheme === 'dark');
         localStorage.setItem('theme', newTheme);
+        themeToggleBtn.setAttribute('aria-checked', newTheme === 'dark');
+    });
+    
+    // Calculator functionality
+    const calculateBtn = document.getElementById('calculateBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    
+    calculateBtn.addEventListener('click', calculateResults);
+    saveBtn.addEventListener('click', saveCalculation);
+    
+    // Initialize saved records from localStorage
+    let savedRecords = JSON.parse(localStorage.getItem('savedRecords')) || [];
+    updateRecordsTable();
+    
+    // Sort buttons functionality
+    document.getElementById('sortByNameBtn').addEventListener('click', () => sortRecords('name'));
+    document.getElementById('sortByLengthBtn').addEventListener('click', () => sortRecords('length'));
+    document.getElementById('sortBySegmentBtn').addEventListener('click', () => sortRecords('segment'));
+    document.getElementById('sortByQuantityBtn').addEventListener('click', () => sortRecords('quantity'));
+    document.getElementById('sortBySegmentsBtn').addEventListener('click', () => sortRecords('segments'));
+    document.getElementById('sortByRemainderBtn').addEventListener('click', () => sortRecords('remainder'));
+    document.getElementById('sortByDateBtn').addEventListener('click', () => sortRecords('date'));
+    
+    // Export/Import functionality
+    document.getElementById('exportBtn').addEventListener('click', exportData);
+    document.getElementById('importBtn').addEventListener('click', function() {
+        document.getElementById('importFile').click();
+    });
+    document.getElementById('importFile').addEventListener('change', importData);
+    
+    // Clear all data functionality
+    document.getElementById('clearBtn').addEventListener('click', clearAllData);
+    
+    // Calculate function
+    function calculateResults() {
+        const rebarLength = parseFloat(document.getElementById('rebarLength').value);
+        const segmentLength = parseFloat(document.getElementById('segmentLength').value);
+        const quantity = parseInt(document.getElementById('quantity').value);
         
-        this.updateThemeIcon(newTheme);
-    }
-
-    updateThemeIcon(theme) {
-        // We don't need to change the icon SVGs anymore
-        // since they're both always present in the HTML structure
-        // The CSS will handle showing/hiding based on the data-theme attribute
-        
-        // Optional: Add animation class for smooth transition
-        const themeToggleBtn = document.getElementById('themeToggleBtn');
-        themeToggleBtn.classList.add('theme-changing');
-        
-        setTimeout(() => {
-            themeToggleBtn.classList.remove('theme-changing');
-        }, 300);
-    }
-
-    calculate() {
-        const rebarLength = parseInt(document.getElementById('rebarLength').value) || 0;
-        const segmentLength = parseInt(document.getElementById('segmentLength').value) || 0;
-        const quantity = parseInt(document.getElementById('quantity').value) || 1;
-
-        if (rebarLength <= 0 || segmentLength <= 0) {
-            this.updateResults(0, 0, 0);
+        if (!rebarLength || !segmentLength || !quantity) {
+            alert('Пожалуйста, заполните все поля корректно');
             return;
         }
-
-        const segmentsPerRebar = Math.floor(rebarLength / segmentLength);
-        const remainderPerRebar = rebarLength % segmentLength;
-        const totalSegments = segmentsPerRebar * quantity;
-        const totalRemainder = remainderPerRebar * quantity;
-
-        this.updateResults(totalSegments, remainderPerRebar, totalRemainder);
-    }
-
-    updateResults(segments, remainder, totalRemainder) {
+        
+        const segments = Math.floor(rebarLength / segmentLength);
+        const remainder = rebarLength % segmentLength;
+        const totalRemainder = remainder * quantity;
+        
         document.getElementById('segments').textContent = segments;
         document.getElementById('remainder').textContent = remainder;
         document.getElementById('totalRemainder').textContent = totalRemainder;
     }
-
-    saveRecord() {
-        const name = document.getElementById('rebarName').value.trim();
-        const rebarLength = parseInt(document.getElementById('rebarLength').value);
-        const segmentLength = parseInt(document.getElementById('segmentLength').value);
+    
+    // Save calculation
+    function saveCalculation() {
+        const rebarName = document.getElementById('rebarName').value;
+        const rebarLength = parseFloat(document.getElementById('rebarLength').value);
+        const segmentLength = parseFloat(document.getElementById('segmentLength').value);
         const quantity = parseInt(document.getElementById('quantity').value);
-
-        if (!name || !rebarLength || !segmentLength || !quantity) {
-            alert('Пожалуйста, заполните все поля');
+        const segments = parseInt(document.getElementById('segments').textContent);
+        const remainder = parseFloat(document.getElementById('remainder').textContent);
+        
+        if (!rebarName || !rebarLength || !segmentLength || !quantity) {
+            alert('Пожалуйста, заполните все поля корректно');
             return;
         }
-
-        const segments = parseInt(document.getElementById('segments').textContent);
-        const remainder = parseInt(document.getElementById('remainder').textContent);
-
+        
+        if (segments === 0) {
+            alert('Пожалуйста, сначала выполните расчет');
+            return;
+        }
+        
         const record = {
             id: Date.now(),
-            name,
-            rebarLength,
-            segmentLength,
-            quantity,
-            segments,
-            remainder,
-            date: new Date().toLocaleString('ru-RU', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            })
+            name: rebarName,
+            length: rebarLength,
+            segment: segmentLength,
+            quantity: quantity,
+            segments: segments,
+            remainder: remainder,
+            totalRemainder: remainder * quantity,
+            date: new Date().toLocaleString('ru-RU')
         };
-
-        this.records.push(record);
-        this.saveToStorage();
-        this.loadRecords();
         
-        // Clear form
-        document.getElementById('rebarName').value = '';
-        document.getElementById('segmentLength').value = '';
-        this.calculate();
+        savedRecords.push(record);
+        localStorage.setItem('savedRecords', JSON.stringify(savedRecords));
+        updateRecordsTable();
     }
-
-    loadRecords() {
+    
+    // Update the records table
+    function updateRecordsTable() {
         const tbody = document.getElementById('recordsBody');
         tbody.innerHTML = '';
-
-        this.records.forEach(record => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
+        
+        savedRecords.forEach(record => {
+            const tr = document.createElement('tr');
+            
+            tr.innerHTML = `
                 <td>${record.name}</td>
-                <td>${record.rebarLength}</td>
-                <td>${record.segmentLength}</td>
+                <td>${record.length}</td>
+                <td>${record.segment}</td>
                 <td>${record.quantity}</td>
                 <td>${record.segments}</td>
                 <td>${record.remainder}</td>
                 <td>${record.date}</td>
                 <td>
-                    <button class="edit-btn" onclick="calculator.editRecord(${record.id})">Редактировать</button>
-                    <button class="delete-btn" onclick="calculator.deleteRecord(${record.id})">Удалить</button>
+                    <button class="action-btn edit-btn" data-id="${record.id}">✏️</button>
+                    <button class="action-btn delete-btn" data-id="${record.id}">🗑️</button>
                 </td>
             `;
-            tbody.appendChild(row);
+            
+            tbody.appendChild(tr);
+        });
+        
+        // Add event listeners for edit and delete buttons
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', editRecord);
+        });
+        
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', deleteRecord);
         });
     }
-
-    editRecord(id) {
-        const record = this.records.find(r => r.id === id);
+    
+    // Sort records function
+    let sortConfig = {
+        key: 'date',
+        direction: 'desc'
+    };
+    
+    function sortRecords(key) {
+        if (sortConfig.key === key) {
+            sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortConfig.key = key;
+            sortConfig.direction = 'asc';
+        }
+        
+        savedRecords.sort((a, b) => {
+            let valueA = a[key];
+            let valueB = b[key];
+            
+            // Handle numeric values
+            if (typeof valueA === 'number' && typeof valueB === 'number') {
+                return sortConfig.direction === 'asc' ? valueA - valueB : valueB - valueA;
+            }
+            
+            // Handle string values
+            if (typeof valueA === 'string' && typeof valueB === 'string') {
+                return sortConfig.direction === 'asc' 
+                    ? valueA.localeCompare(valueB, 'ru') 
+                    : valueB.localeCompare(valueA, 'ru');
+            }
+            
+            return 0;
+        });
+        
+        updateRecordsTable();
+        
+        // Update sort icons
+        document.querySelectorAll('.sort-btn .sort-icon').forEach(icon => {
+            icon.textContent = '↕';
+        });
+        
+        const activeIcon = document.querySelector(`#sortBy${key.charAt(0).toUpperCase() + key.slice(1)}Btn .sort-icon`);
+        if (activeIcon) {
+            activeIcon.textContent = sortConfig.direction === 'asc' ? '↑' : '↓';
+        }
+    }
+    
+    // Edit record function
+    function editRecord(e) {
+        const recordId = parseInt(e.target.getAttribute('data-id'));
+        const record = savedRecords.find(r => r.id === recordId);
+        
         if (record) {
             document.getElementById('rebarName').value = record.name;
-            document.getElementById('rebarLength').value = record.rebarLength;
-            document.getElementById('segmentLength').value = record.segmentLength;
+            document.getElementById('rebarLength').value = record.length;
+            document.getElementById('segmentLength').value = record.segment;
             document.getElementById('quantity').value = record.quantity;
             
-            this.deleteRecord(id);
-            this.calculate();
+            // Remove record to avoid duplication when saving
+            savedRecords = savedRecords.filter(r => r.id !== recordId);
+            localStorage.setItem('savedRecords', JSON.stringify(savedRecords));
+            updateRecordsTable();
+            
+            // Calculate with new values
+            calculateResults();
         }
     }
-
-    deleteRecord(id) {
+    
+    // Delete record function
+    function deleteRecord(e) {
         if (confirm('Вы уверены, что хотите удалить эту запись?')) {
-            this.records = this.records.filter(r => r.id !== id);
-            this.saveToStorage();
-            this.loadRecords();
+            const recordId = parseInt(e.target.getAttribute('data-id'));
+            savedRecords = savedRecords.filter(r => r.id !== recordId);
+            localStorage.setItem('savedRecords', JSON.stringify(savedRecords));
+            updateRecordsTable();
         }
     }
-
-    sortRecords(type) {
-        if (type === 'name') {
-            this.records.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (type === 'date') {
-            this.records.sort((a, b) => {
-                const parseDate = (dateStr) => {
-                    if (dateStr.includes(',')) {
-                        const [datePart, timePart] = dateStr.split(', ');
-                        const [day, month, year] = datePart.split('.');
-                        return new Date(`${year}-${month}-${day}T${timePart}`);
-                    } else {
-                        const [day, month, year] = dateStr.split('.');
-                        return new Date(`${year}-${month}-${day}`);
-                    }
-                };
-                return parseDate(b.date) - parseDate(a.date);
-            });
-        } else {
-            // For numeric fields
-            this.records.sort((a, b) => b[type] - a[type]);
+    
+    // Export data function
+    function exportData() {
+        if (savedRecords.length === 0) {
+            alert('Нет данных для экспорта');
+            return;
         }
-        this.loadRecords();
-    }
-
-    exportData() {
-        const dataStr = JSON.stringify(this.records, null, 2);
-        const dataUri = 'data:text/plain;charset=utf-8,'+ encodeURIComponent(dataStr);
         
-        const exportFileDefaultName = `rebar_calculations_${new Date().toISOString().split('T')[0]}.txt`;
+        const dataStr = JSON.stringify(savedRecords, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        
+        const exportFileName = `armature_data_${new Date().toISOString().slice(0, 10)}.json`;
         
         const linkElement = document.createElement('a');
         linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.setAttribute('download', exportFileName);
+        linkElement.style.display = 'none';
+        document.body.appendChild(linkElement);
         linkElement.click();
+        document.body.removeChild(linkElement);
     }
-
-    importData(event) {
-        const file = event.target.files[0];
+    
+    // Import data function
+    function importData(e) {
+        const file = e.target.files[0];
         if (!file) return;
-
+        
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = function(event) {
             try {
-                const importedData = JSON.parse(e.target.result);
+                const importedData = JSON.parse(event.target.result);
+                
                 if (Array.isArray(importedData)) {
-                    if (confirm('Это заменит все существующие данные. Продолжить?')) {
-                        this.records = importedData;
-                        this.saveToStorage();
-                        this.loadRecords();
-                        alert('Данные успешно импортированы');
+                    if (confirm('Импортировать данные? Существующие записи будут сохранены.')) {
+                        savedRecords = [...savedRecords, ...importedData];
+                        localStorage.setItem('savedRecords', JSON.stringify(savedRecords));
+                        updateRecordsTable();
                     }
                 } else {
                     alert('Неверный формат файла');
                 }
             } catch (error) {
-                alert('Ошибка при чтении файла');
+                alert('Ошибка при чтении файла: ' + error.message);
             }
+            
+            // Reset file input
+            e.target.value = '';
         };
+        
         reader.readAsText(file);
     }
-
-    saveToStorage() {
-        localStorage.setItem('rebarRecords', JSON.stringify(this.records));
-    }
-}
-
-// Initialize calculator when page loads
-const calculator = new RebarCalculator();
-
-// Add system theme change listener
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-    if (!localStorage.getItem('theme')) {
-        const newTheme = e.matches ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', newTheme);
-        calculator.updateThemeIcon(newTheme);
-    }
-});
-// Initialize calculator when page loads
-const calculator = new RebarCalculator();
-
-// Add system theme change listener
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-    if (!localStorage.getItem('theme')) {
-        const newTheme = e.matches ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', newTheme);
-        calculator.updateThemeIcon(newTheme);
+    
+    // Clear all data function
+    function clearAllData() {
+        if (confirm('Вы уверены, что хотите удалить все сохраненные данные?')) {
+            savedRecords = [];
+            localStorage.setItem('savedRecords', JSON.stringify(savedRecords));
+            updateRecordsTable();
+        }
     }
 });
