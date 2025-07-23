@@ -26,13 +26,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
     themeToggleBtn.addEventListener('click', toggleTheme);
     
+    // Add variable to track editing state
+    let currentlyEditing = null;
+    
     // Calculator functionality
     const calculateBtn = document.getElementById('calculateBtn');
     const saveBtn = document.getElementById('saveBtn');
     
     // Change Calculate button to Clear button
     calculateBtn.textContent = "Очистить";
-    calculateBtn.addEventListener('click', clearInputs);
+    calculateBtn.addEventListener('click', function() {
+        if (currentlyEditing) {
+            cancelEditing();
+        } else {
+            clearInputs();
+        }
+    });
     saveBtn.addEventListener('click', saveCalculation);
     
     // Add live calculation with input event listeners
@@ -74,6 +83,14 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('totalRemainder').textContent = '0';
     }
     
+    // Function to cancel editing
+    function cancelEditing() {
+        currentlyEditing = null;
+        clearInputs();
+        calculateBtn.textContent = "Очистить";
+        saveBtn.textContent = "Сохранить";
+    }
+    
     // Calculate function - now updates live
     function calculateResults() {
         const rebarLength = parseFloat(document.getElementById('rebarLength').value) || 0;
@@ -96,7 +113,63 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('totalRemainder').textContent = totalRemainder;
     }
     
-    // Save calculation
+    // Update the records table with improved visualization
+    function updateRecordsTable() {
+        const tbody = document.getElementById('recordsBody');
+        tbody.innerHTML = '';
+        
+        if (savedRecords.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = `<td colspan="8" class="empty-records">Нет сохраненных расчетов</td>`;
+            tbody.appendChild(emptyRow);
+            return;
+        }
+        
+        savedRecords.forEach((record, index) => {
+            const tr = document.createElement('tr');
+            
+            // Add class for row identification
+            tr.classList.add('record-row');
+            tr.dataset.recordId = record.id;
+            
+            // Add class for animation if it's a newly added record
+            if (index === savedRecords.length - 1 && savedRecords.length > 1) {
+                tr.classList.add('new-record');
+            }
+            
+            tr.innerHTML = `
+                <td title="${record.name}">${truncateText(record.name, 20)}</td>
+                <td>${record.length}</td>
+                <td>${record.segment}</td>
+                <td>${record.quantity}</td>
+                <td>${record.segments}</td>
+                <td>${record.remainder}</td>
+                <td title="${record.date}">${record.date}</td>
+                <td>
+                    <button class="action-btn edit-btn" data-id="${record.id}" title="Редактировать">✏️</button>
+                    <button class="action-btn delete-btn" data-id="${record.id}" title="Удалить">🗑️</button>
+                </td>
+            `;
+            
+            tbody.appendChild(tr);
+        });
+        
+        // Add event listeners for edit and delete buttons
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', editRecord);
+        });
+        
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', deleteRecord);
+        });
+    }
+    
+    // Helper function to truncate long text
+    function truncateText(text, maxLength) {
+        return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    }
+    
+    // Save calculation with improved UX
     function saveCalculation() {
         const rebarName = document.getElementById('rebarName').value;
         const rebarLength = parseFloat(document.getElementById('rebarLength').value);
@@ -115,8 +188,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Create record object
         const record = {
-            id: Date.now(),
+            id: currentlyEditing ? currentlyEditing : Date.now(),
             name: rebarName,
             length: rebarLength,
             segment: segmentLength,
@@ -124,50 +198,35 @@ document.addEventListener('DOMContentLoaded', function() {
             segments: segments,
             remainder: remainder,
             totalRemainder: remainder * quantity,
-            date: new Date().toLocaleString('ru-RU')
+            date: currentlyEditing ? 
+                  (savedRecords.find(r => r.id === currentlyEditing)?.date || new Date().toLocaleString('ru-RU')) : 
+                  new Date().toLocaleString('ru-RU')
         };
         
-        savedRecords.push(record);
+        if (currentlyEditing) {
+            // Update existing record
+            const index = savedRecords.findIndex(r => r.id === currentlyEditing);
+            if (index !== -1) {
+                savedRecords[index] = record;
+            }
+            // Reset editing state
+            currentlyEditing = null;
+            calculateBtn.textContent = "Очистить";
+            saveBtn.textContent = "Сохранить";
+        } else {
+            // Add new record
+            savedRecords.push(record);
+        }
+        
+        // Save to localStorage and update UI
         localStorage.setItem('savedRecords', JSON.stringify(savedRecords));
         updateRecordsTable();
         
-        // Optional: Clear inputs after saving
-        // clearInputs();
-    }
-    
-    // Update the records table
-    function updateRecordsTable() {
-        const tbody = document.getElementById('recordsBody');
-        tbody.innerHTML = '';
+        // Optional: clear inputs after saving
+        clearInputs();
         
-        savedRecords.forEach(record => {
-            const tr = document.createElement('tr');
-            
-            tr.innerHTML = `
-                <td>${record.name}</td>
-                <td>${record.length}</td>
-                <td>${record.segment}</td>
-                <td>${record.quantity}</td>
-                <td>${record.segments}</td>
-                <td>${record.remainder}</td>
-                <td>${record.date}</td>
-                <td>
-                    <button class="action-btn edit-btn" data-id="${record.id}">✏️</button>
-                    <button class="action-btn delete-btn" data-id="${record.id}">🗑️</button>
-                </td>
-            `;
-            
-            tbody.appendChild(tr);
-        });
-        
-        // Add event listeners for edit and delete buttons
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', editRecord);
-        });
-        
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', deleteRecord);
-        });
+        // Scroll to the table to show the newly added/edited record
+        document.querySelector('.table-container').scrollIntoView({ behavior: 'smooth' });
     }
     
     // Sort records function
@@ -222,28 +281,50 @@ document.addEventListener('DOMContentLoaded', function() {
         const record = savedRecords.find(r => r.id === recordId);
         
         if (record) {
+            // Set the editing state
+            currentlyEditing = recordId;
+            
+            // Change button texts
+            calculateBtn.textContent = "Отмена";
+            saveBtn.textContent = "Обновить";
+            
+            // Fill the form with record data
             document.getElementById('rebarName').value = record.name;
             document.getElementById('rebarLength').value = record.length;
             document.getElementById('segmentLength').value = record.segment;
             document.getElementById('quantity').value = record.quantity;
             
-            // Remove record to avoid duplication when saving
-            savedRecords = savedRecords.filter(r => r.id !== recordId);
-            localStorage.setItem('savedRecords', JSON.stringify(savedRecords));
-            updateRecordsTable();
-            
-            // Calculate with new values
+            // Calculate with loaded values
             calculateResults();
+            
+            // Scroll to form
+            document.querySelector('#rebarForm').scrollIntoView({ behavior: 'smooth' });
         }
     }
     
-    // Delete record function
+    // Delete record function with improved UX
     function deleteRecord(e) {
-        if (confirm('Вы уверены, что хотите удалить эту запись?')) {
-            const recordId = parseInt(e.target.getAttribute('data-id'));
-            savedRecords = savedRecords.filter(r => r.id !== recordId);
-            localStorage.setItem('savedRecords', JSON.stringify(savedRecords));
-            updateRecordsTable();
+        const recordId = parseInt(e.target.getAttribute('data-id'));
+        const record = savedRecords.find(r => r.id === recordId);
+        
+        if (confirm(`Вы уверены, что хотите удалить запись "${record.name}"?`)) {
+            // Animate the row before removing
+            const row = document.querySelector(`.record-row[data-record-id="${recordId}"]`);
+            if (row) {
+                row.style.transition = 'opacity 0.3s ease-out';
+                row.style.opacity = '0';
+                
+                setTimeout(() => {
+                    savedRecords = savedRecords.filter(r => r.id !== recordId);
+                    localStorage.setItem('savedRecords', JSON.stringify(savedRecords));
+                    updateRecordsTable();
+                }, 300);
+            } else {
+                // Fallback if animation doesn't work
+                savedRecords = savedRecords.filter(r => r.id !== recordId);
+                localStorage.setItem('savedRecords', JSON.stringify(savedRecords));
+                updateRecordsTable();
+            }
         }
     }
     
