@@ -7,14 +7,24 @@ document.addEventListener('DOMContentLoaded', function() {
     document.documentElement.setAttribute('data-theme', savedTheme);
     themeToggleBtn.setAttribute('aria-checked', savedTheme === 'dark');
     
-    themeToggleBtn.addEventListener('click', function() {
+    // Add keyboard shortcut (Shift+D) for toggling theme
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'D' && e.shiftKey) {
+            toggleTheme();
+        }
+    });
+    
+    // Theme toggle function
+    function toggleTheme() {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         const newTheme = currentTheme === 'light' ? 'dark' : 'light';
         
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
         themeToggleBtn.setAttribute('aria-checked', newTheme === 'dark');
-    });
+    }
+    
+    themeToggleBtn.addEventListener('click', toggleTheme);
     
     // Calculator functionality
     const calculateBtn = document.getElementById('calculateBtn');
