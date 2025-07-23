@@ -1,7 +1,9 @@
+# robots.txt for Armature Calculator
+# https://kazuhakew.github.io/Armature-Calculator/
+
 User-agent: *
 Allow: /
-Sitemap: https://kazuhakew.github.io/Armature-Calculator/sitemap.xml
+Disallow:
 
-# Armature Calculator
-# Created: 2025
-# Contact: asakew7@gmail.com
+# Allow all robots complete access
+# Last updated: 2025-07-23
